@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+
+}
+
+
+
+model ScraperProfile {
+  id String @id @default(uuid())
+  name String
+  userId String 
+  city String
+  sort String        
+  rooms String
+  pages Int
+  minPrice Int
+  maxPrice  Int
+  scrapeResult ScrapeResult[] @relation("ScraperProfileToScrapeResult")
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+model PropertyWatcher {
+  id String @id @default(uuid())
+  userId String
+  watchedProperty ScrapeResultValue[] @relation("PropertyWatcherToScrapeResult")
+  watchedProperyWatched ScrapeResultValueWatched[] @relation("PropertyWatcherToScrapeResultWatched")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+
+model ScrapeResult {
+  id String @id @default(uuid())
+  scraperProfileId String
+  scraperProfile ScraperProfile @relation("ScraperProfileToScrapeResult",fields: [scraperProfileId], references: [id], onDelete: Cascade)
+  scrapeResultValue ScrapeResultValue[] @relation("ScrapeResultToScrapeResultValue")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([scraperProfileId])
+
+}
+
+
+
+model ScrapeResultValue {
+  id String @id @default(uuid())
+  scrapeResultId String
+  scrapeResult ScrapeResult @relation("ScrapeResultToScrapeResultValue",fields: [scrapeResultId], references: [id], onDelete: Cascade)
+  PropertyWatcherId String?
+  PropertyWatcher PropertyWatcher? @relation("PropertyWatcherToScrapeResult",fields: [PropertyWatcherId], references: [id])
+  title String
+  address String
+  price Int
+  url String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  @@index([scrapeResultId])
+}
+
+
+model ScrapeResultValueWatched {
+  id String @id @default(uuid())
+  PropertyWatcherId String?
+  PropertyWatcher PropertyWatcher? @relation("PropertyWatcherToScrapeResultWatched",fields: [PropertyWatcherId], references: [id])
+  
+  title String
+  address String
+  price Int
+  scrapedPrice Int
+  isPriceChanged Boolean
+  priceList ScrapedPrice[]
+  text String?
+  url String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  @@index([PropertyWatcherId])
+}
+
+
+model ScrapedPrice{
+  id String @id @default(uuid())
+  scrapeResultValueWatchedId String?
+  scrapeResultValueWatched ScrapeResultValueWatched? @relation(fields: [scrapeResultValueWatchedId], references: [id])
+
+  price Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([scrapeResultValueWatchedId])
+}
